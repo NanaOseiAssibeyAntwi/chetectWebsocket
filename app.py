@@ -9,8 +9,12 @@ from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from chetectWebsocket.model_client import ModelApiError, ModelClient
-from chetectWebsocket.settings import settings
+try:
+    from chetectWebsocket.model_client import ModelApiError, ModelClient
+    from chetectWebsocket.settings import settings
+except ModuleNotFoundError:
+    from model_client import ModelApiError, ModelClient
+    from settings import settings
 
 app = FastAPI(
     title="Chetect WebSocket Gateway",
@@ -20,6 +24,7 @@ app = FastAPI(
         "video chunks, landmarks, or extracted features to the CheatingDetector API."
     ),
 )
+app.__module__ = __name__
 
 app.add_middleware(
     CORSMiddleware,
@@ -569,4 +574,3 @@ async def _send_error(
 
 async def _send(websocket: WebSocket, payload: dict[str, Any]) -> None:
     await websocket.send_json(payload)
-

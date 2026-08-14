@@ -4,7 +4,10 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from chetectWebsocket.app import app
+try:
+    from chetectWebsocket.app import app
+except ModuleNotFoundError:
+    from app import app
 
 
 class FakeModelClient:
@@ -49,7 +52,7 @@ class WebSocketGatewayTests(unittest.TestCase):
     def test_ping_and_image_frame(self):
         image_payload = base64.b64encode(b"fake-jpeg").decode("ascii")
 
-        with patch("chetectWebsocket.app.ModelClient", FakeModelClient):
+        with patch(f"{app.__module__}.ModelClient", FakeModelClient):
             client = TestClient(app)
             with client.websocket_connect("/ws/analyze") as websocket:
                 ready = websocket.receive_json()
@@ -81,4 +84,3 @@ class WebSocketGatewayTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
