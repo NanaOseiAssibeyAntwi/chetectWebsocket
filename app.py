@@ -65,7 +65,22 @@ def root() -> dict[str, Any]:
 
 @app.get("/health")
 def health() -> dict[str, str]:
+    print('[gateway] health check requested')
     return {"status": "ok"}
+
+
+@app.get("/ws/health")
+def websocket_health() -> dict[str, Any]:
+    print('[gateway] websocket health check requested', {
+        'model_api_base_url': settings.model_api_base_url,
+        'allowed_origins': settings.allowed_origins,
+    })
+    return {
+        "status": "ok",
+        "websocket": "/ws/analyze",
+        "model_api_base_url": settings.model_api_base_url,
+        "ready": True,
+    }
 
 
 @app.websocket("/ws/analyze")
@@ -74,6 +89,12 @@ async def analyze_socket(websocket: WebSocket) -> None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
+    print('[gateway] websocket connection attempt', {
+        'origin': websocket.headers.get('origin'),
+        'session_id': websocket.query_params.get('session_id'),
+        'auto_create_session': websocket.query_params.get('auto_create_session'),
+        'binary_kind': websocket.query_params.get('binary_kind', 'image'),
+    })
     await websocket.accept()
     state = ConnectionState(
         session_id=websocket.query_params.get("session_id") or None,
